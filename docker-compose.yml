@@ -1,0 +1,83 @@
+version: '2.4'
+
+services:
+
+  frontend:
+    build:
+      context: ./workhours_frontend
+      args:
+        - NODE_ENV=development
+    command: yarn dev
+    networks:
+      - frontend
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./workhours_frontend:/opt/node_app/app
+      - ./workhours_frontend/package.json:/opt/node_app/package.json
+      - ./workhours_frontend/yarn.lock:/opt/node_app/yarn.lock
+      - notused:/opt/node_app/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+    depends_on:
+      - backend
+    healthcheck:
+      disable: true
+
+  backend:
+    build:
+      context: ./workhours_backend
+      args:
+        - NODE_ENV=development
+    command: ../node_modules/.bin/nodemon --inspect=0.0.0.0:9229 ./src/index
+    networks:
+      - backend
+    ports:
+      - '3001:3000'
+      - '9229:9229'
+      - '9230:9230'
+    volumes:
+      - ./workhours_backend:/opt/node_app/app
+      - ./workhours_backend/package.json:/opt/node_app/package.json
+      - ./workhours_backend/package-lock.json:/opt/node_app/package-lock.json
+      - notused:/opt/node_app/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - MONGO_USERNAME=root
+      - MONGO_PASSWORD=example
+      - MONGO_HOSTNAME=mongo
+      - MONGO_PORT=27017
+      - MONGO_DATABASE_NAME=workhours
+      - JWT_SECRET=aifuojdhasiuswejhfguiowerjhfg3245u34trfj
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+
+  mongo:
+    image: mongo:4
+    networks:
+      - backend
+    ports:
+      - '27017:27017'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=example
+      - MONGO_INITDB_DATABASE=workhours
+    volumes:
+      - ./workhours_backend/src/db/seed.js:/docker-entrypoint-initdb.d/seed.js
+    healthcheck:
+      test: '[ `echo ''db.runCommand("ping").ok'' | mongo localhost/workhours --quiet` ] && echo 0 || echo 1'
+      interval: 5s
+      start_period: 10s
+      timeout: 4s
+      retries: 3
+
+networks: 
+  frontend:
+  backend:
+
+volumes:
+  notused:
