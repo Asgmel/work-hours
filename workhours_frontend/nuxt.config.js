@@ -39,7 +39,7 @@ export default {
 
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
-    baseURL: 'https://work-hours-api.herokuapp.com',
+    baseURL: 'http://localhost:3001',
   },
 
   // Vuetify module configuration: https://go.nuxtjs.dev/config-vuetify
